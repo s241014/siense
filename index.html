@@ -542,6 +542,17 @@ body {
             </div>
         
     </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL = "https://xsvvolzzonvccqtofskl.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_y4f3q0KRP3pkZ01swTDc-Q_WyUfTGXl";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
+</script>
 <script>
 // ==========================================
 // 【かんたん専用】基礎問題データベース（全問解説付）
@@ -1455,28 +1466,39 @@ console.log({
   aura: currentAura
 });
     
-fetch(
-  "https://script.google.com/macros/s/AKfycbx_08cke11frlnfvyODDuU_-sIiHPQZUHM-CASk5BUH_D2lPz4UFA5NNFVQ6MJ5EEUILg/exec",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
-    body: JSON.stringify({
-      userId: getUserName(),
-      playerId: playerId,
-      difficulty: selectedDiff,
-      field: currentField,
-      playTime: playTime,
-      correct: correctCount,
-      wrong: wrongCount,
-      score: score + bonus,
-      character: currentIcon,
-      aura: currentAura,
-      result: isWin ? "WIN" : "LOSE"
-    })
-  }
-)
+saveGameResult(isWin, score + bonus, playTime);
+```javascript
+async function saveGameResult(isWin, finalScore, playTime) {
+    const record = {
+        user_id: getUserName(),
+        player_id: playerId,
+        difficulty: selectedDiff,
+        field: currentField,
+        play_time: Math.max(0, Math.floor(Number(playTime) || 0)),
+        correct: correctCount,
+        wrong: wrongCount,
+        score: Math.max(0, Math.floor(Number(finalScore) || 0)),
+        character: currentIcon,
+        aura: currentAura,
+        result: isWin ? "WIN" : "LOSE"
+    };
+
+    try {
+        const { error } = await supabaseClient
+            .from("game_results")
+            .insert([record]);
+
+        if (error) {
+            throw error;
+        }
+
+        console.log("ゲーム結果をSupabaseに保存しました");
+    } catch (error) {
+        console.error("ゲーム結果の保存に失敗しました:", error);
+        alert("ゲーム結果の保存に失敗しました。");
+    }
+}
+```
 .then(r => r.text())
 .then(data => {
   console.log("保存結果", data);
